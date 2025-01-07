@@ -3,6 +3,7 @@ from collections import defaultdict, Counter
 
 
 class Piece:
+    """Main piece class, specific piece classes inherit from this one."""
     def __init__(self, type, color, position, status=True, previous_move=None):
         self.type = type
         self.color = color
@@ -47,15 +48,12 @@ class Pawn(Piece):
             self.just_moved_two = False  # Reset flag otherwise
 
     def promote(self, new_piece_type, positions):
-        """Promote the pawn to another piece."""
-        # List of valid promotion pieces
         piece_classes = {'queen': Queen, 'rook': Rook, 'bishop': Bishop, 'knight': Knight}
 
         if new_piece_type not in piece_classes:
             print("Invalid piece type for promotion!")
             return False
 
-        # Replace pawn with the chosen piece
         positions[self.position] = piece_classes[new_piece_type](self.color, self.position, self.status,self.previous_move)
         print(f"Pawn promoted to {new_piece_type.capitalize()} at {self.position}")
         return True
@@ -66,36 +64,33 @@ class Pawn(Piece):
         col, row = self.position[0], int(self.position[1])
         # New position
         new_col, new_row = new_position[0], int(new_position[1])
-        # Movement direction based on color
         direction = 1 if self.color == 'white' else -1
 
-        # --- Forward Move (1 square) ---
+        # Move by 1 square
         if col == new_col and new_row == row + direction:
-            if new_position not in positions:  # Square must be empty
+            if new_position not in positions:
                 return True
 
-        # --- Double Move (2 squares from starting position) ---
+        # Move by 2 squares, only from starting position
         if col == new_col and ((row == 2 and self.color == 'white' and new_row == 4) or (row == 7 and self.color == 'black' and new_row == 5)):
             intermediate_square = f"{col}{row + direction}"
-            if new_row == row + 2 * direction:  # Move two squares forward
-                if intermediate_square not in positions and new_position not in positions:  # Path must be clear
+            if new_row == row + 2 * direction:
+                if intermediate_square not in positions and new_position not in positions:
                     return True
 
-        # --- Capture Move (Diagonal Move) ---
-        if abs(ord(col) - ord(new_col)) == 1 and new_row == row + direction:  # Move diagonally
-            if new_position in positions and positions[new_position].color != self.color:  # Opponent's piece
+        # Capture move (excluding en passant)
+        if abs(ord(col) - ord(new_col)) == 1 and new_row == row + direction:
+            if new_position in positions and positions[new_position].color != self.color:
                 return True
 
-        # --- En passant (latest chess update) ---
-
-        if abs(ord(col) - ord(new_col)) == 1 and new_row == row + direction:  # Diagonal move
-            adjacent_square = f"{new_col}{row}"  # Square where the opponent pawn is
-            if adjacent_square in positions:  # Check if there's a pawn there
+        # En passant (latest chess update)
+        if abs(ord(col) - ord(new_col)) == 1 and new_row == row + direction:
+            adjacent_square = f"{new_col}{row}"
+            if adjacent_square in positions:
                 adjacent_piece = positions[adjacent_square]
                 if isinstance(adjacent_piece,Pawn) and adjacent_piece.color != self.color and adjacent_piece.just_moved_two:
                     return True
 
-        # --- Invalid Move ---
         return False
 
 class Rook(Piece):
@@ -170,22 +165,22 @@ class Queen(Piece):
         if abs(ord(col) - ord(new_col)) == abs(row - new_row):
             return self.is_path_clear_diagonal(new_position, positions)
 
-        # If it's neither a straight nor a diagonal move, it's invalid
+
         return False
 
     def is_path_clear_straight(self, new_position, positions):
-        """Check if path is clear for straight moves (row or column)."""
+
         col, row = self.position[0], int(self.position[1])
         new_col, new_row = new_position[0], int(new_position[1])
 
-        # Moving vertically (same column)
+        # Moving vertically
         if col == new_col:
             step = 1 if new_row > row else -1
             for r in range(row + step, new_row, step):
                 if f"{col}{r}" in positions:  # Blocked by a piece
                     return False
 
-        # Moving horizontally (same row)
+        # Moving horizontally
         elif row == new_row:
             step = 1 if ord(new_col) > ord(col) else -1
             for c in range(ord(col) + step, ord(new_col), step):
@@ -195,7 +190,6 @@ class Queen(Piece):
         return True
 
     def is_path_clear_diagonal(self, new_position, positions):
-        """Check if path is clear for diagonal moves."""
         col, row = self.position[0], int(self.position[1])
         new_col, new_row = new_position[0], int(new_position[1])
 
@@ -203,7 +197,7 @@ class Queen(Piece):
         col_step = 1 if ord(new_col) > ord(col) else -1
         row_step = 1 if new_row > row else -1
 
-        # Check each square along the diagonal path
+        # Check each square along the path
         for i in range(1, abs(ord(new_col) - ord(col))):
             check_col = chr(ord(col) + i * col_step)
             check_row = row + i * row_step
@@ -232,6 +226,7 @@ class Knight(Piece):
 
 
 def create_chessboard():
+    """Does what the name is."""
     rows = [8, 7, 6, 5, 4, 3, 2, 1]  # Row numbers
     columns = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']  # Column labels
 
@@ -240,11 +235,12 @@ def create_chessboard():
     return chessboard_created
 
 def display_chessboard(board, pos):
+    """Displays the chessboard with coloured squares and pieces"""
     column_labels = "  a  b  c  d  e  f  g  h"
-    white_square = "\033[47m   \033[0m"  # White square
-    black_square = "   "  # Black square
-
+    white_square = "\033[47m   \033[0m"
+    black_square = "   "
     print(column_labels)
+
     for row_index, row in enumerate(board):
         line = f"{8 - row_index} "  # Add row number at the beginning of the line
         for col_index, square in enumerate(row):
@@ -255,7 +251,7 @@ def display_chessboard(board, pos):
                     line += f"\033[47m {pieces} \033[0m"
                 else:
                     line += f" {pieces} "
-            else:  # Empty square
+            else:
                 if (row_index + col_index) % 2 == 0:
                     line += white_square
                 else:
@@ -265,6 +261,7 @@ def display_chessboard(board, pos):
 
 # Create the chessboard
 chessboard = create_chessboard()
+# List of squares where the pawn can promote
 promotion_squares = ["a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1", "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8"]
 # Piece positions dictionary using class instances
 pos = {
@@ -286,24 +283,33 @@ pos = {
 display_chessboard(chessboard, pos)
 
 def playersign(pmove):
+    """Changes the player's turn, reverses the player"""
     return not pmove
 
-playername1 = input("Podaj nazwę pierwszego gracza: ")
-playername2 = input("Podaj nazwę drugiego gracza: ")
 
+# Get the player name (not required)
+playername1 = "" + input("Podaj nazwę pierwszego gracza: ")
+playername2 = "" + input("Podaj nazwę drugiego gracza: ")
+
+# Creates a defaultdict for tracking the game state (instead of normal dict for handling empty keys)
 board_state_tracker = defaultdict(int)
 
 def saved_game_state(current_positions):
-    """Uses default dict to handle default values of missing a key, checks the amount of times a position has been reached"""
+    """Uses default dict to handle default values of missing a key, checks the amount of times a position has been reached."""
     state = tuple(sorted((key, piece.type, piece.color) for key, piece in current_positions.items()))
     board_state_tracker[state] += 1
-    if board_state_tracker[state] >= 450000:
+    print(board_state_tracker[state])
+
+    #TODO Wtf is this spaghetti, idk why its 8 and not 9 and it goes down in some places, look into later although it works by a miracle
+
+    if board_state_tracker[state] >= 8:
         print("Threefold repetition detected! Game ends in a draw")
+        display_chessboard(chessboard, pos)
         exit()
     return {key: (piece.type, piece.color, piece.position, piece.status, piece.previous_move) for key, piece in current_positions.items()}
 
 def restore_game_state(saved_state):
-    """Restore the saved state of the board."""
+    """Restores the saved state of the board."""
     pos.clear()
     for key, value in saved_state.items():
         piece_type, color, position, status, previous_move = value
@@ -321,6 +327,7 @@ def restore_game_state(saved_state):
             pos[key] = King(color, position, status, previous_move)
 
 def castle_check(colour, choice):
+    """Checks for a possibility of castling both ways for both sides, includes castling with check."""
     castled = False
     if choice == 'O-O':
         if colour == 'white':
@@ -434,6 +441,7 @@ def is_square_attacked(square, color, positions):
     return False
 
 def simulate_move(piece, move_input, wanted_move):
+    """Simulates a move to check for its legality, also checks for mate and checks."""
     # Save the current state
     saved_state = saved_game_state(pos)
 
@@ -456,13 +464,14 @@ def simulate_move(piece, move_input, wanted_move):
     # Restore the original state
     restore_game_state(saved_state)
 
+    # Changes the flag of pawns for en passant
     if isinstance(piece, Pawn):
         piece.just_moved_two = just_moved_two_flag
 
-    # Return True if the move doesn't leave the king in check
     return not in_check
 
 def checking():
+    """Checks if a move is a check (pun intended), also checks if a move doesn't leave your king in check."""
     saved_state = saved_game_state(pos)
 
     your_king = next((v.position for v in pos.values() if v.color == current_color and isinstance(v, King)), None)
@@ -470,7 +479,7 @@ def checking():
         print("Bro..., nice king you got there")
         restore_game_state(saved_state)
         return False
-    # Finalize move if valid
+
     enemy_king = next((v.position for v in pos.values() if v.color == enemy_color and isinstance(v, King)), None)
     if is_square_attacked(enemy_king, enemy_color, pos):
         if is_checkmate(enemy_king, enemy_color, pos):
@@ -481,7 +490,7 @@ def checking():
     return True
 
 def king_legal_moves(king, positions):
-    """Returns a list of all legal moves for the king using its class method."""
+    """Returns a list of all legal moves for the king."""
     legal_moves = []
     # Loop through all squares on the board to find valid moves
     for col in 'abcdefgh':
@@ -496,10 +505,8 @@ def king_legal_moves(king, positions):
     return legal_moves
 
 def can_block_check(king_position, attacking_piece, positions):
-    """
-    Check if any piece can block the check or capture the attacking piece.
-    """
-    # Get attacker's position
+    """Check if any piece can block the check or capture the attacking piece."""
+
     attacker_pos = attacking_piece.position
     attack_path = []
 
@@ -520,12 +527,11 @@ def can_block_check(king_position, attacking_piece, positions):
             if current_pos != king_position:  # Exclude the king's position itself
                 attack_path.append(current_pos)
 
+    # Pawns and Knights can't be blocked, only captured
     elif isinstance(attacking_piece, Knight):
-        # Knights can't be blocked; only capturing is valid
         attack_path = [attacker_pos]
 
     elif isinstance(attacking_piece, Pawn):
-        # Pawns can't be blocked; only capturing is valid
         attack_path = [attacker_pos]
 
     # Check if any piece can block or capture the attacker
@@ -534,8 +540,7 @@ def can_block_check(king_position, attacking_piece, positions):
             continue
         for square in attack_path:
             if piece.is_legal_move(square, positions):
-                if piece.type == 'king':
-                    continue
+
                 # Simulate the move to verify it doesn't leave the king in check
                 if simulate_move(piece, position, square):
                     print(f"Game goes on, {piece.type.capitalize()} at {square}")
@@ -544,6 +549,7 @@ def can_block_check(king_position, attacking_piece, positions):
     return False
 
 def is_checkmate(king_position, king_color, positions):
+    """Checks if a move is mate, ends the game if so."""
     king = positions[king_position]
     if not is_square_attacked(king_position, king_color, positions):
         return False
@@ -559,18 +565,22 @@ def is_checkmate(king_position, king_color, positions):
             if can_block_check(king_position, attacker, positions):
                 return False
 
-        # If no escape moves or blocks, it's checkmate
     return True
 
 def count_pieces(positions):
+    """Does what the name is."""
     counter = Counter(piece.type for piece in positions.values())
     return counter
 
 fifty_move_check = 0
 last_moved_pawn = None
+
 def moving(piece, move_input, wanted_move, move_counter):
+    """Main function for moving pieces, also checks for 50 move draw and en passant possibility."""
     global fifty_move_check
     global last_moved_pawn
+
+    #Checks for en passant possibility
     if isinstance(piece, Pawn) and last_moved_pawn is not None:
         if last_moved_pawn.just_moved_two:
             target_row = int(piece.position[1]) + (1 if piece.color == 'white' else -1)
@@ -582,10 +592,10 @@ def moving(piece, move_input, wanted_move, move_counter):
                     if not simulate_move(piece, move_input, wanted_move):
                         print("Nielegalny ruch, nie blokuje szacha")
                         return False
-                    del pos[true_square]  # Remove captured pawn
-                    piece.move(wanted_move)  # Move capturing pawn
+                    del pos[true_square]
+                    piece.move(wanted_move)
                     pos[wanted_move] = piece
-                    del pos[move_input]  # Remove the original position
+                    del pos[move_input]
                     is_viable = checking()
                     if not is_viable:
                         return False
@@ -593,6 +603,7 @@ def moving(piece, move_input, wanted_move, move_counter):
                     fifty_move_check = 0
                     return True
 
+    # Normal move without any captures
     if piece.is_legal_move(wanted_move, pos):
         if wanted_move not in pos:
             if not simulate_move(piece, move_input, wanted_move):
@@ -628,6 +639,7 @@ def moving(piece, move_input, wanted_move, move_counter):
                 exit()
 
             return True
+        # A move including the capture
         else:
             target = pos[wanted_move]
             if target.color != piece.color:
@@ -677,25 +689,22 @@ def moving(piece, move_input, wanted_move, move_counter):
         return False
 
 def validate_input(prompt):
-    while True:  # Keep asking until valid input is provided
+    """Validates the move input in order to correctly address the pieces."""
+    while True:
         try:
-            move_inputted = input(prompt).strip().lower()  # Get input and normalize to lowercase
+            move_inputted = input(prompt).strip().lower()
 
-            # Check length (must be exactly 2 characters)
             if len(move_inputted) != 2:
                 raise ValueError("Invalid input length. Must be 2 characters (e.g., 'a1').")
 
-            # Check if the first character is a valid column (a-h)
             column = move_inputted[0]
             if column < 'a' or column > 'h':
                 raise ValueError("Invalid column. Must be between 'a' and 'h'.")
 
-            # Check if the second character is a valid row (1-8)
             row = move_inputted[1]
             if row < '1' or row > '8':
                 raise ValueError("Invalid row. Must be between '1' and '8'.")
 
-            # If all checks pass, return the valid input
             return move_inputted
 
         except ValueError as e:
@@ -706,14 +715,18 @@ first = True
 playermove = True
 game = True
 move_counter = 0
+
 while game:
+    """Main game loop, changes the player moving and keeps the game flowing."""
     move_counter += 1
     if first:
-        print(f"Teraz nastąpi ruch gracza {playername1}")
+        if playername1 != "":
+            print(f"Teraz nastąpi ruch gracza {playername1}")
         current_color = 'white'
         enemy_color = 'black'
     else:
-        print(f"Teraz nastąpi ruch gracza {playername2}")
+        if playername2 != "":
+            print(f"Teraz nastąpi ruch gracza {playername2}")
         current_color = 'black'
         enemy_color = 'white'
     if move_counter >= 40:
@@ -723,6 +736,7 @@ while game:
 
     correctmove = False
 
+    #Tries to get a move from a player, stuck until given correct move
     while not correctmove:
         move_input = validate_input("Podaj pole figury którą chcesz ruszyć: ")
         has_castled = castle_check(current_color, move_input)
@@ -743,12 +757,11 @@ while game:
 
     display_chessboard(chessboard, pos)
 
-    if False:
-        pass
-    else:
-        for p in pos.values():
-            if isinstance(p, Pawn):
-                p.just_moved_two = False
-        if last_moved_pawn:
-            last_moved_pawn.just_moved_two = True
-        first = playersign(first)
+
+    # Changes the player currently moving and handles en passant flag
+    for p in pos.values():
+        if isinstance(p, Pawn):
+            p.just_moved_two = False
+    if last_moved_pawn:
+        last_moved_pawn.just_moved_two = True
+    first = playersign(first)
