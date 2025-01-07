@@ -329,19 +329,20 @@ def restore_game_state(saved_state):
             pos[key] = King(color, position, status, previous_move)
 
 def castle_check(colour, choice):
-    #TODO fix immediately, input isn't checked and castling straight up doesnt work, spaghetti
     """Checks for a possibility of castling both ways for both sides, includes castling with check."""
     castled = False
     if choice == 'o-o':
         if colour == 'white':
-            white_king = pos['e1']
-            white_rook_h1 = pos['h1']
+            try:
+                white_king = pos['e1']
+                white_rook_h1 = pos['h1']
+            except KeyError:
+                print("Król lub wieża nie są na poprawnych polach")
+                return False
             rook_moved = white_rook_h1 in pos.values() and white_rook_h1.previous_move is None
             king_moved = white_king in pos.values() and white_king.previous_move is None
             path_clear = all(square not in pos for square in ['f1', 'g1'])
             path_safe = all(not is_square_attacked(square, colour, pos) for square in ['e1','f1', 'g1'])
-            print(path_clear)
-            print(path_safe)
             if not rook_moved or not king_moved or not path_clear or not path_safe:
                 print("Roszada niemożliwa")
             else:
@@ -359,8 +360,12 @@ def castle_check(colour, choice):
                     print("Roszada z szachem xD")
 
         elif colour == 'black':
-            black_king = pos['e8']
-            black_rook_h8 = pos['h8']
+            try:
+                black_king = pos['e8']
+                black_rook_h8 = pos['h8']
+            except KeyError:
+                print("Król lub wieża nie są na poprawnych polach")
+                return False
             rook_moved = black_rook_h8 not in pos.values() or black_rook_h8.previous_move is not None
             king_moved = black_king not in pos.values() or black_king.previous_move is not None
             path_clear = all(square not in pos for square in ['f8', 'g8'])
@@ -384,8 +389,12 @@ def castle_check(colour, choice):
 
     if choice == 'o-o-o':
         if colour == 'white':
-            white_king = pos['e1']
-            white_rook_a1 = pos['a1']
+            try:
+                white_king = pos['e1']
+                white_rook_a1 = pos['a1']
+            except KeyError:
+                print("Król lub wieża nie są na poprawnych polach")
+                return False
             rook_moved = white_rook_a1 not in pos.values() or white_rook_a1.previous_move is not None
             king_moved = white_king not in pos.values() or white_king.previous_move is not None
             path_clear = all(square not in pos for square in ['b1', 'c1', 'd1'])
@@ -408,8 +417,12 @@ def castle_check(colour, choice):
                     print("Roszada z szachem xD")
 
         elif colour == 'black':
-            black_king = pos['e8']
-            black_rook_a8 = pos['a8']
+            try:
+                black_king = pos['e8']
+                black_rook_a8 = pos['a8']
+            except KeyError:
+                print("Król lub wieża nie są na poprawnych polach")
+                return False
             rook_moved = black_rook_a8 not in pos.values() or black_rook_a8.previous_move is not None
             king_moved = black_king not in pos.values() or black_king.previous_move is not None
             path_clear = all(square not in pos for square in ['b8', 'c8', 'd8'])
