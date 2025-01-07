@@ -1,7 +1,9 @@
+#TODO Implement playing with AI (preferably different strengths)
+#TODO Change the way of moving to cursor and add GUI or create website
 
 from collections import defaultdict, Counter
 
-
+#TODO Do i need the status argument? Can be removed later probably
 class Piece:
     """Main piece class, specific piece classes inherit from this one."""
     def __init__(self, type, color, position, status=True, previous_move=None):
@@ -298,7 +300,7 @@ def saved_game_state(current_positions):
     """Uses default dict to handle default values of missing a key, checks the amount of times a position has been reached."""
     state = tuple(sorted((key, piece.type, piece.color) for key, piece in current_positions.items()))
     board_state_tracker[state] += 1
-    print(board_state_tracker[state])
+    print("Amount of repetitons: " + str(board_state_tracker[state]))
 
     #TODO Wtf is this spaghetti, idk why its 8 and not 9 and it goes down in some places, look into later although it works by a miracle
 
@@ -329,7 +331,7 @@ def restore_game_state(saved_state):
 def castle_check(colour, choice):
     """Checks for a possibility of castling both ways for both sides, includes castling with check."""
     castled = False
-    if choice == 'O-O':
+    if choice == 'o-o':
         if colour == 'white':
             white_king = pos['e1']
             white_rook_h1 = pos['h1']
@@ -378,7 +380,7 @@ def castle_check(colour, choice):
                 if castled_with_check:
                     print("Roszada z szachem xD")
 
-    if choice == 'O-O-O':
+    if choice == 'o-o-o':
         if colour == 'white':
             white_king = pos['e1']
             white_rook_a1 = pos['a1']
@@ -628,8 +630,6 @@ def moving(piece, move_input, wanted_move, move_counter):
 
             if isinstance(piece, Pawn) and move_counter != 1:
                 last_moved_pawn = piece
-                print(last_moved_pawn)
-                print(last_moved_pawn.just_moved_two)
                 fifty_move_check = 0
             else:
                 fifty_move_check += 1
@@ -689,10 +689,14 @@ def moving(piece, move_input, wanted_move, move_counter):
         return False
 
 def validate_input(prompt):
+
     """Validates the move input in order to correctly address the pieces."""
     while True:
         try:
             move_inputted = input(prompt).strip().lower()
+
+            if move_inputted == "o-o" or move_inputted == "o-o-o":
+                return move_inputted
 
             if len(move_inputted) != 2:
                 raise ValueError("Invalid input length. Must be 2 characters (e.g., 'a1').")
@@ -733,7 +737,7 @@ while game:
 
     #TODO Draw by agreement i guess? Not really sure how to input it better
     if move_counter >= 40 and not i_guess_it_was_too_early:
-        draw_agreement = input("Agree to a draw? (Y/N): ").lower()
+        draw_agreement = input("Agree to a draw? (y/n): ").lower()
         if draw_agreement == 'y':
             print("Game ends in a draw by agreement!")
         else:
@@ -742,14 +746,14 @@ while game:
     elif not i_guess_it_was_too_early and move_counter >= 40 * a:
         i_guess_it_was_too_early = False
 
-    correctmove = False
+    correct_move = False
 
     #Tries to get a move from a player, stuck until given correct move
-    while not correctmove:
+    while not correct_move:
         move_input = validate_input("Podaj pole figury którą chcesz ruszyć: ")
         has_castled = castle_check(current_color, move_input)
         if has_castled:
-            correctmove = True
+            correct_move = True
             break
         if move_input in pos:
             piece = pos[move_input]
@@ -757,11 +761,13 @@ while game:
                 wanted_move = input('Podaj pole na które chcesz się ruszyć: ').strip().lower()
                 move_done = moving(piece, move_input, wanted_move, move_counter)
                 if move_done:
-                    correctmove = True
+                    correct_move = True
             else:
                 print("Nie możesz ruszać figurami przeciwnika")
+        #Excludes castling input
         else:
-            print("Wybrałeś pole bez figury")
+            if move_input != "o-o" and move_input != 'o-o-o':
+                print("Wybrałeś pole bez figury")
 
     display_chessboard(chessboard, pos)
 
