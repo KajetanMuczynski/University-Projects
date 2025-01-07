@@ -336,13 +336,8 @@ def castle_check(colour, choice):
         if colour == 'white':
             white_king = pos['e1']
             white_rook_h1 = pos['h1']
-            print(white_rook_h1 == pos['h1'])
-            print(pos['h1'])
-            print(white_rook_h1 in pos)
-            print(pos['e1'])
-            print(white_king in pos)
-            rook_moved = white_rook_h1 in pos and white_rook_h1.previous_move is None
-            king_moved = white_king in pos and white_king.previous_move is None
+            rook_moved = white_rook_h1 in pos.values() and white_rook_h1.previous_move is None
+            king_moved = white_king in pos.values() and white_king.previous_move is None
             path_clear = all(square not in pos for square in ['f1', 'g1'])
             path_safe = all(not is_square_attacked(square, colour, pos) for square in ['e1','f1', 'g1'])
             print(path_clear)
@@ -366,8 +361,8 @@ def castle_check(colour, choice):
         elif colour == 'black':
             black_king = pos['e8']
             black_rook_h8 = pos['h8']
-            rook_moved = black_rook_h8 not in pos or black_rook_h8.previous_move is not None
-            king_moved = black_king not in pos or black_king.previous_move is not None
+            rook_moved = black_rook_h8 not in pos.values() or black_rook_h8.previous_move is not None
+            king_moved = black_king not in pos.values() or black_king.previous_move is not None
             path_clear = all(square not in pos for square in ['f8', 'g8'])
             path_safe = all(not is_square_attacked(square, colour, pos) for square in ['e8', 'f8', 'g8'])
 
@@ -391,8 +386,8 @@ def castle_check(colour, choice):
         if colour == 'white':
             white_king = pos['e1']
             white_rook_a1 = pos['a1']
-            rook_moved = white_rook_a1 not in pos or white_rook_a1.previous_move is not None
-            king_moved = white_king not in pos or white_king.previous_move is not None
+            rook_moved = white_rook_a1 not in pos.values() or white_rook_a1.previous_move is not None
+            king_moved = white_king not in pos.values() or white_king.previous_move is not None
             path_clear = all(square not in pos for square in ['b1', 'c1', 'd1'])
             path_safe = all(not is_square_attacked(square, colour, pos) for square in ['b1','c1','d1','e1'])
 
@@ -415,8 +410,8 @@ def castle_check(colour, choice):
         elif colour == 'black':
             black_king = pos['e8']
             black_rook_a8 = pos['a8']
-            rook_moved = black_rook_a8 not in pos or black_rook_a8.previous_move is not None
-            king_moved = black_king not in pos or black_king.previous_move is not None
+            rook_moved = black_rook_a8 not in pos.values() or black_rook_a8.previous_move is not None
+            king_moved = black_king not in pos.values() or black_king.previous_move is not None
             path_clear = all(square not in pos for square in ['b8', 'c8', 'd8'])
             path_safe = all(not is_square_attacked(square, colour, pos) for square in ['b8', 'c8', 'd8', 'e8'])
 
@@ -765,7 +760,7 @@ while game:
         if move_input in pos:
             piece = pos[move_input]
             if piece.color == current_color:
-                wanted_move = input('Podaj pole na które chcesz się ruszyć: ').strip().lower()
+                wanted_move = validate_input('Podaj pole na które chcesz się ruszyć: ')
                 move_done = moving(piece, move_input, wanted_move, move_counter)
                 if move_done:
                     correct_move = True
