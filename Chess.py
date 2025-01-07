@@ -329,18 +329,25 @@ def restore_game_state(saved_state):
             pos[key] = King(color, position, status, previous_move)
 
 def castle_check(colour, choice):
+    #TODO fix immediately, input isn't checked and castling straight up doesnt work, spaghetti
     """Checks for a possibility of castling both ways for both sides, includes castling with check."""
     castled = False
     if choice == 'o-o':
         if colour == 'white':
             white_king = pos['e1']
             white_rook_h1 = pos['h1']
-            rook_moved = white_rook_h1 not in pos or white_rook_h1.previous_move is not None
-            king_moved = white_king not in pos or white_king.previous_move is not None
+            print(white_rook_h1 == pos['h1'])
+            print(pos['h1'])
+            print(white_rook_h1 in pos)
+            print(pos['e1'])
+            print(white_king in pos)
+            rook_moved = white_rook_h1 in pos and white_rook_h1.previous_move is None
+            king_moved = white_king in pos and white_king.previous_move is None
             path_clear = all(square not in pos for square in ['f1', 'g1'])
             path_safe = all(not is_square_attacked(square, colour, pos) for square in ['e1','f1', 'g1'])
-
-            if rook_moved or king_moved or not path_clear or not path_safe:
+            print(path_clear)
+            print(path_safe)
+            if not rook_moved or not king_moved or not path_clear or not path_safe:
                 print("Roszada niemożliwa")
             else:
                 white_king.move('g1')
