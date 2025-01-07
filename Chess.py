@@ -712,9 +712,10 @@ def validate_input(prompt):
             print("Please enter a valid position between 'a1' and 'h8'.")
 
 first = True
-playermove = True
 game = True
 move_counter = 0
+i_guess_it_was_too_early = False
+a = 2
 
 while game:
     """Main game loop, changes the player moving and keeps the game flowing."""
@@ -729,10 +730,17 @@ while game:
             print(f"Teraz nastąpi ruch gracza {playername2}")
         current_color = 'black'
         enemy_color = 'white'
-    if move_counter >= 40:
+
+    #TODO Draw by agreement i guess? Not really sure how to input it better
+    if move_counter >= 40 and not i_guess_it_was_too_early:
         draw_agreement = input("Agree to a draw? (Y/N): ").lower()
         if draw_agreement == 'y':
             print("Game ends in a draw by agreement!")
+        else:
+            i_guess_it_was_too_early = True
+            a += 1
+    elif not i_guess_it_was_too_early and move_counter >= 40 * a:
+        i_guess_it_was_too_early = False
 
     correctmove = False
 
