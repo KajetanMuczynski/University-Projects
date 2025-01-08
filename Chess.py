@@ -1,8 +1,9 @@
 #TODO Implement playing with AI (preferably different strengths)
 #TODO Change the way of moving to cursor and add GUI or create website
-
+from os import system
 from collections import defaultdict, Counter
-
+#system("clear") (dodac do update chessboard, do wyswietlania)
+#TODO ASAP change the movement to arrows
 #TODO Do i need the status argument? Can be removed later probably
 class Piece:
     """Main piece class, specific piece classes inherit from this one."""
