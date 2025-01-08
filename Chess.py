@@ -1,8 +1,6 @@
-#TODO Implement playing with AI (preferably different strengths)
-#TODO Change the way of moving to cursor and add GUI or create website
 from os import system
 from collections import defaultdict, Counter
-#system("clear") (dodac do update chessboard, do wyswietlania)
+#os.system('cls') (dodac do update chessboard, do wyswietlania)
 #TODO ASAP change the movement to arrows
 #TODO Do i need the status argument? Can be removed later probably
 class Piece:
@@ -39,7 +37,7 @@ class Pawn(Piece):
     def __init__(self, color, position, status=True, previous_move=None):
         super().__init__('pawn', color, position, status, previous_move)
         self.just_moved_two = False
-
+        self.legal_moves = []
     def move(self, new_position):
         self.previous_move = self.position
         self.position = new_position
@@ -61,8 +59,8 @@ class Pawn(Piece):
         print(f"Pawn promoted to {new_piece_type.capitalize()} at {self.position}")
         return True
 
-
     def is_legal_move(self, new_position, positions):
+        self.legal_moves.clear()
         # Current position
         col, row = self.position[0], int(self.position[1])
         # New position
@@ -70,21 +68,23 @@ class Pawn(Piece):
         direction = 1 if self.color == 'white' else -1
 
         # Move by 1 square
-        if col == new_col and new_row == row + direction:
-            if new_position not in positions:
-                return True
+        forward_one = f"{col}{row + direction}"
+        if forward_one not in positions:
+            self.legal_moves.append(forward_one)
+
 
         # Move by 2 squares, only from starting position
         if col == new_col and ((row == 2 and self.color == 'white' and new_row == 4) or (row == 7 and self.color == 'black' and new_row == 5)):
             intermediate_square = f"{col}{row + direction}"
-            if new_row == row + 2 * direction:
-                if intermediate_square not in positions and new_position not in positions:
-                    return True
+            forward_two = f"{col}{row + 2 * direction}"
+            if intermediate_square not in positions and forward_two not in positions:
+                self.legal_moves.append(forward_two)
 
         # Capture move (excluding en passant)
         if abs(ord(col) - ord(new_col)) == 1 and new_row == row + direction:
             if new_position in positions and positions[new_position].color != self.color:
-                return True
+                capture_square = f"{new_position[0]}{new_position[1]}"
+                self.legal_moves.append(capture_square)
 
         # En passant (latest chess update)
         if abs(ord(col) - ord(new_col)) == 1 and new_row == row + direction:
@@ -92,13 +92,15 @@ class Pawn(Piece):
             if adjacent_square in positions:
                 adjacent_piece = positions[adjacent_square]
                 if isinstance(adjacent_piece,Pawn) and adjacent_piece.color != self.color and adjacent_piece.just_moved_two:
-                    return True
+                    capture_square = f"{new_col}{new_row}"
+                    self.legal_moves.append(capture_square)
 
-        return False
+        return new_position in self.legal_moves
 
 class Rook(Piece):
     def __init__(self, color, position, status=True, previous_move=None):
         super().__init__('rook', color, position, status, previous_move)
+        self.legal_moves = []
 
     def is_legal_move(self, new_position, positions):
         col, row = self.position[0], int(self.position[1])
@@ -120,13 +122,17 @@ class Rook(Piece):
         elif row == new_row:
             step = 1 if ord(new_col) > ord(col) else -1
             for c in range(ord(col) + step, ord(new_col), step):
-                if f"{chr(c)}{row}" in positions:
+                legal_square = f"{chr(c)}{row}"
+                self.legal_moves.append(legal_square)
+                if legal_square in positions:
+                    self.legal_moves.clear()
                     return False
-        return True
+        return new_position in self.legal_moves
 
 class Bishop(Piece):
     def __init__(self, color, position, status=True, previous_move=None):
         super().__init__('bishop', color, position, status, previous_move)
+        self.legal_moves = []
 
     def is_legal_move(self, new_position, positions):
         col, row = self.position[0], int(self.position[1])
@@ -146,15 +152,20 @@ class Bishop(Piece):
         for i in range(1, abs(ord(new_col) - ord(col))):
             check_col = chr(ord(col) + i * col_step)
             check_row = row + i * row_step
-            if f"{check_col}{check_row}" in positions:
+            legal_square = f"{check_col}{check_row}"
+            self.legal_moves.append(legal_square)
+            if legal_square in positions:
+                self.legal_moves.clear()
                 return False
-        return True
+        return new_position in self.legal_moves
 
 class Queen(Piece):
     def __init__(self, color, position, status=True, previous_move=None):
         super().__init__('queen', color, position, status, previous_move)
+        self.legal_moves = []
 
     def is_legal_move(self, new_position, positions):
+        self.legal_moves.clear()
         # Current position
         col, row = self.position[0], int(self.position[1])
         # New position
@@ -167,12 +178,9 @@ class Queen(Piece):
         # Check if move is along a diagonal (Bishop-like move)
         if abs(ord(col) - ord(new_col)) == abs(row - new_row):
             return self.is_path_clear_diagonal(new_position, positions)
-
-
         return False
 
     def is_path_clear_straight(self, new_position, positions):
-
         col, row = self.position[0], int(self.position[1])
         new_col, new_row = new_position[0], int(new_position[1])
 
@@ -180,17 +188,23 @@ class Queen(Piece):
         if col == new_col:
             step = 1 if new_row > row else -1
             for r in range(row + step, new_row, step):
-                if f"{col}{r}" in positions:  # Blocked by a piece
+                legal_square = f"{col}{r}"
+                self.legal_moves.append(legal_square)
+                if legal_square in positions:  # Blocked by a piece
+                    self.legal_moves.clear()
                     return False
 
         # Moving horizontally
         elif row == new_row:
             step = 1 if ord(new_col) > ord(col) else -1
             for c in range(ord(col) + step, ord(new_col), step):
-                if f"{chr(c)}{row}" in positions:  # Blocked by a piece
+                legal_square = f"{chr(c)}{row}"
+                self.legal_moves.append(legal_square)
+                if legal_square in positions:  # Blocked by a piece
+                    self.legal_moves.clear()
                     return False
 
-        return True
+        return new_position in self.legal_moves
 
     def is_path_clear_diagonal(self, new_position, positions):
         col, row = self.position[0], int(self.position[1])
@@ -204,7 +218,10 @@ class Queen(Piece):
         for i in range(1, abs(ord(new_col) - ord(col))):
             check_col = chr(ord(col) + i * col_step)
             check_row = row + i * row_step
-            if f"{check_col}{check_row}" in positions:  # Blocked by a piece
+            legal_square = f"{check_col}{check_row}"
+            self.legal_moves.append(legal_square)
+            if legal_square in positions:  # Blocked by a piece
+                self.legal_moves.clear()
                 return False
 
         return True
@@ -212,21 +229,52 @@ class Queen(Piece):
 class King(Piece):
     def __init__(self, color, position, status=True, previous_move=None):
         super().__init__('king', color, position, status, previous_move)
+        self.legal_moves = []
 
     def is_legal_move(self, new_position, positions):
+        self.legal_moves.clear()
         col, row = self.position[0], int(self.position[1])
         new_col, new_row = new_position[0], int(new_position[1])
-        return max(abs(ord(col) - ord(new_col)), abs(row - new_row)) == 1
+
+        col_distance = abs(ord(col) - ord(new_col))
+        row_distance = abs(row - new_row)
+
+        for col_step in [-1, 0, 1]:
+            for row_step in [-1, 0, 1]:
+                # Skip the current position
+                if col_step == 0 and row_step == 0:
+                    continue
+
+                check_col = chr(ord(col) + col_step)
+                check_row = row + row_step
+                legal_square = f"{check_col}{check_row}"
+
+                if 'a' <= check_col <= 'h' and 1 <= check_row <= 8:
+                    self.legal_moves.append(legal_square)
+
+        return new_position in self.legal_moves
 
 class Knight(Piece):
     def __init__(self, color, position, status=True, previous_move=None):
         super().__init__('knight', color, position, status, previous_move)
+        self.legal_moves = []
 
     def is_legal_move(self, new_position, positions):
+        self.legal_moves.clear()
+        # Current position
         col, row = self.position[0], int(self.position[1])
-        new_col, new_row = new_position[0], int(new_position[1])
-        return (abs(ord(col) - ord(new_col)), abs(row - new_row)) in [(1, 2), (2, 1)]
+        # Possible relative moves for a knight
+        moves = [(2, 1), (2, -1), (-2, 1), (-2, -1),(1, 2), (1, -2), (-1, 2), (-1, -2)]
 
+        # Generate legal moves based on the current position
+        for change_col, change_row in moves:
+            new_col = chr(ord(col) + change_col)
+            new_row = row + change_row
+            if 'a' <= new_col <= 'h' and 1 <= new_row <= 8:  # Stay within bounds
+                legal_square = f"{new_col}{new_row}"
+                self.legal_moves.append(legal_square)
+
+        return new_position in self.legal_moves
 
 def create_chessboard():
     """Does what the name is."""
