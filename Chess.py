@@ -345,15 +345,14 @@ playername2 = "" + input("Podaj nazwę drugiego gracza: ")
 # Creates a defaultdict for tracking the game state (instead of normal dict for handling empty keys)
 board_state_tracker = defaultdict(int)
 
-def saved_game_state(current_positions):
+def saved_game_state(current_positions, isinplace):
     """Uses default dict to handle default values of missing a key, checks the amount of times a position has been reached."""
     state = tuple(sorted((key, piece.type, piece.color) for key, piece in current_positions.items()))
-    board_state_tracker[state] += 1
-    print("Amount of repetitons: " + str(board_state_tracker[state]))
+    if isinplace:
+        board_state_tracker[state] += 1
+        print("Amount of repetitons: " + str(board_state_tracker[state]))
 
-    #TODO Wtf is this spaghetti, idk why its 8 and not 9 and it goes down in some places, look into later although it works by a miracle
-
-    if board_state_tracker[state] >= 8:
+    if board_state_tracker[state] >= 3:
         print("Threefold repetition detected! Game ends in a draw")
         display_chessboard(chessboard, pos)
         exit()
@@ -509,7 +508,7 @@ def is_square_attacked(square, color, positions):
 def simulate_move(piece, move_input, wanted_move):
     """Simulates a move to check for its legality, also checks for mate and checks."""
     # Save the current state
-    saved_state = saved_game_state(pos)
+    saved_state = saved_game_state(pos, False)
 
     just_moved_two_flag = None
     if isinstance(piece, Pawn):
@@ -538,7 +537,7 @@ def simulate_move(piece, move_input, wanted_move):
 
 def checking():
     """Checks if a move is a check (pun intended), also checks if a move doesn't leave your king in check."""
-    saved_state = saved_game_state(pos)
+    saved_state = saved_game_state(pos, False)
 
     your_king = next((v.position for v in pos.values() if v.color == current_color and isinstance(v, King)), None)
     if is_square_attacked(your_king, current_color, pos):
@@ -606,7 +605,6 @@ def can_block_check(king_position, attacking_piece, positions):
             continue
         for square in attack_path:
             if piece.is_legal_move(square, positions):
-
                 # Simulate the move to verify it doesn't leave the king in check
                 if simulate_move(piece, position, square):
                     print(f"Game goes on, {piece.type.capitalize()} at {square}")
@@ -616,12 +614,11 @@ def can_block_check(king_position, attacking_piece, positions):
 
 def is_checkmate(king_position, king_color, positions):
     """Checks if a move is mate, ends the game if so."""
+    not_in_check = False
     king = positions[king_position]
     if not is_square_attacked(king_position, king_color, positions):
-        return False
-
+        not_in_check = True
     legal_moves = king_legal_moves(king,positions)
-
     if legal_moves:
         print(f"Legalne ruchy w {legal_moves}")
         return False
@@ -630,8 +627,12 @@ def is_checkmate(king_position, king_color, positions):
         if attacker.color != king_color and attacker.is_legal_move(king_position, positions):
             if can_block_check(king_position, attacker, positions):
                 return False
+    if not not_in_check:
+        return True
+    elif not legal_moves_check(pos):
+        print("It's Stalemate, game over!")
+        exit()
 
-    return True
 
 def count_pieces(positions):
     """Does what the name is."""
@@ -667,6 +668,7 @@ def moving(piece, move_input, wanted_move, move_counter):
                         return False
                     piece.just_moved_two = False
                     fifty_move_check = 0
+                    saved_game_state(pos, True)
                     return True
 
     # Normal move without any captures
@@ -675,7 +677,6 @@ def moving(piece, move_input, wanted_move, move_counter):
             if not simulate_move(piece, move_input, wanted_move):
                 print("Nielegalny ruch, nie blokuje szacha")
                 return False
-
 
             piece.move(wanted_move)
             pos[wanted_move] = piece
@@ -702,6 +703,7 @@ def moving(piece, move_input, wanted_move, move_counter):
                 print("Draw by 50 move rule!")
                 exit()
 
+            saved_game_state(pos, True)
             return True
         # A move including the capture
         else:
@@ -744,6 +746,7 @@ def moving(piece, move_input, wanted_move, move_counter):
                     piece.promote(new_piece, pos)
                 fifty_move_check = 0
 
+                saved_game_state(pos, True)
                 return True
             else:
                 print("Nielegalny ruch - własna figura na celu")
@@ -752,8 +755,20 @@ def moving(piece, move_input, wanted_move, move_counter):
         print("Nielegalny ruch")
         return False
 
-def validate_input(prompt):
+def legal_moves_check(positions):
+    legal_moves_list = []
+    for position, piece in positions.items():
+        for col in 'abcdefgh':
+            for row in '12345678':
+                target_square = f"{col}{row}"
+                if piece.is_legal_move(target_square, position):
+                    legal_moves_list.append(target_square)
+    if not legal_moves_list:
+        return False
+    print(legal_moves_list)
+    return True
 
+def validate_input(prompt):
     """Validates the move input in order to correctly address the pieces."""
     while True:
         try:
