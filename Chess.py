@@ -533,7 +533,7 @@ def checking():
 
     your_king = next((v.position for v in pos.values() if v.color == current_color and isinstance(v, King)), None)
     if is_square_attacked(your_king, current_color, pos):
-        messages.append("Bro..., nice king you got there") #TODO change it later to smth normal
+        messages.append("Bro..., nice king you got there, you are in check")
         restore_game_state(saved_state)
         return False
 
