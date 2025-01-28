@@ -618,7 +618,7 @@ def can_block_check(king_position, attacking_piece, positions):
                 if piece.color != attacking_piece.color:
                     if piece.is_legal_move(square, positions):
                         if simulate_move(piece, position, square) or simulate_move(piece, position, attacker_pos):
-                            messages.append(f"Game goes on, {piece.type.capitalize()}, {piece.color} at {square}")
+                            messages.append(f"Game goes on, {piece.type.capitalize()} at {square}")
                             return True
                     if piece.is_legal_move(attacker_pos, positions):
                         if simulate_move(piece, position, attacker_pos):
@@ -998,12 +998,3 @@ def game_loop(stdscr):
                 display_chessboard_with_selector(stdscr, chessboard, pos, selector_row, selector_col, messages)
 
 curses.wrapper(game_loop)
-
-
-
-
-
-
-
-
-#Dodane linijki zeby bylo ladnie rowno 1000 :)
